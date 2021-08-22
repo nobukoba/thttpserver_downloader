@@ -11,7 +11,7 @@
 void DisplayNode(TXMLEngine &xml, XMLNodePointer_t node, Int_t level, TString baseurl, TString fulldir) {
    // this function display all accessible information about xml node and its children
    //printf("%*c node: %s\n", level, ' ', xml.GetNodeName(node));
-   
+   //
    // display namespace
    //XMLNsPointer_t ns = xml.GetNS(node);
    //if (ns != 0)
@@ -71,8 +71,6 @@ int main(int argc, char **argv) {
     
   // First create engine
   TXMLEngine xml;
-  
-
   
   // Now try to parse xml file
   // Only file with restricted xml syntax are supported
