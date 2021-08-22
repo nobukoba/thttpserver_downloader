@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <iostream>
 
-void DisplayNode(TXMLEngine &xml, XMLNodePointer_t node, Int_t level, TString baseurl, TString fulldir) {
+void GotoNode(TXMLEngine &xml, XMLNodePointer_t node, Int_t level, TString baseurl, TString fulldir) {
    // this function display all accessible information about xml node and its children
    //printf("%*c node: %s\n", level, ' ', xml.GetNodeName(node));
    //
@@ -51,7 +51,7 @@ void DisplayNode(TXMLEngine &xml, XMLNodePointer_t node, Int_t level, TString ba
    // display all child nodes
    XMLNodePointer_t child = xml.GetChild(node);
    while (child != 0) {
-     DisplayNode(xml, child, level + 2, baseurl, fulldir);
+     GotoNode(xml, child, level + 2, baseurl, fulldir);
       child = xml.GetNext(child);
    }
    save->cd();
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
   // display recursively all nodes and subnodes
   TString fulldir = "";
   while (child != 0) {
-    DisplayNode(xml, child, 1, baseurl, fulldir);
+    GotoNode(xml, child, 1, baseurl, fulldir);
     child = xml.GetNext(child);
   }
   
