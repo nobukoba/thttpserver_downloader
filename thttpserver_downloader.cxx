@@ -1,15 +1,18 @@
 #include "TXMLEngine.h"
+#include "TFile.h"
+#include "TH1.h"
+#include "TH2.h"
+#include "TBufferJSON.h"
 #include "TSystem.h"
 #include "TString.h"
 #include <stdio.h>
 #include <iostream>
 
-void DisplayNode(TXMLEngine &xml, XMLNodePointer_t node, Int_t level)
-{
+void DisplayNode(TXMLEngine &xml, XMLNodePointer_t node, Int_t level, TString fulldir) {
    // this function display all accessible information about xml node and its children
 
    printf("%*c node: %s\n", level, ' ', xml.GetNodeName(node));
-
+   
    // display namespace
    XMLNsPointer_t ns = xml.GetNS(node);
    if (ns != 0)
@@ -27,18 +30,42 @@ void DisplayNode(TXMLEngine &xml, XMLNodePointer_t node, Int_t level)
    if (content != 0)
       printf("%*c cont: %s\n", level + 2, ' ', content);
 
+   TDirectory *save = gDirectory;
+   TString attr_kind = xml.GetAttr(node,"_kind");
+   TString attr_name = xml.GetAttr(node,"_name");
+   if (attr_kind.BeginsWith("ROOT.TH")) {
+     TString cmd = "curl -s http://oxygen.rcnp.osaka-u.ac.jp:8083/" + fulldir + attr_name + "/root.json.gz | gunzip -c";
+     cmd.ReplaceAll(";","\\;");
+     cmd.ReplaceAll("(","\\(");
+     cmd.ReplaceAll(")","\\)");
+     std::cout << cmd << std::endl;
+     TString result = gSystem->GetFromPipe(cmd.Data());
+     TObject *obj = 0;
+     TBufferJSON::FromJSON(obj, result);
+     if (obj) obj->Write();
+   }else{
+     TDirectoryFile * dir = new TDirectoryFile(attr_name.Data(),attr_name.Data(),"",save);
+     dir->cd();
+     fulldir += attr_name + "/";
+   }
+
    // display all child nodes
    XMLNodePointer_t child = xml.GetChild(node);
    while (child != 0) {
-      DisplayNode(xml, child, level + 2);
+     DisplayNode(xml, child, level + 2, fulldir);
       child = xml.GetNext(child);
    }
+   save->cd();
    return;
 }
 
 int main(int argc, char **argv) {
-  std::cout << "aa" << std::endl;
-   // First create engine
+  /* rpath is used for this program. If LD_LIBRARY_PATH is set,
+     the other version of root lib will be loaded. Therefore
+     the LD_LIBRARY_PATH should be unset. */
+  gSystem->Setenv("LD_LIBRARY_PATH",""); 
+
+  // First create engine
    TXMLEngine xml;
 
    // Now try to parse xml file
@@ -51,12 +78,22 @@ int main(int argc, char **argv) {
 
    // take access to main node
    XMLNodePointer_t mainnode = xml.DocGetRootElement(xmldoc);
-
+   XMLNodePointer_t child = xml.GetChild(mainnode);
+   TString filetitle = xml.GetAttr(child,"_name");
+   TString filename = filetitle + ".root";
+   child = xml.GetChild(child);
+   child = xml.GetNext(child);
+   TFile* f = new TFile(filename.Data(),"recreate");
+   std::cout << "New ROOT file: " << filename.Data() << " was created." << std::endl;
+   
    // display recursively all nodes and subnodes
-   DisplayNode(xml, mainnode, 1);
+   TString fulldir = "";
+   DisplayNode(xml, child, 1, fulldir);
 
    // Release memory before exit
    xml.FreeDoc(xmldoc);
-  
+
+   f->Write();
+   f->Close();
   return 0;
 }
