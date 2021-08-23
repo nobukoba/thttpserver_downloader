@@ -7,7 +7,7 @@ LFLAGS    =
 # Explicit version of ROOT is used
 #ROOTCONF  = $(HOME)/cern/root_v6.22.06/bin/root-config
 # Present version of ROOT is used
- ROOTCONF  = root-config
+ROOTCONF  = root-config
 HAS_RPATH = $(shell $(ROOTCONF) --has-rpath)
 ifeq ($(HAS_RPATH),yes)
 CXXFLAGS  = $(shell $(ROOTCONF) --cflags)
